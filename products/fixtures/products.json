@@ -1,0 +1,38 @@
+[
+  {
+    "model": "products.products",
+    "pk": 1,
+    "fields": {
+      "name": "Худак Черный",
+      "description": "Норм",
+      "price": "4990.90",
+      "quantity": 5,
+      "image": "products_images/adidas_originals_hoodie_in_black_1l2AKol.webp",
+      "category": 2
+    }
+  },
+  {
+    "model": "products.products",
+    "pk": 2,
+    "fields": {
+      "name": "Рюкзак",
+      "description": "Четкий все дела",
+      "price": "8990.90",
+      "quantity": 10,
+      "image": "products_images/adidas_toploader_backpack.webp",
+      "category": 5
+    }
+  },
+  {
+    "model": "products.products",
+    "pk": 3,
+    "fields": {
+      "name": "Бомбер",
+      "description": "бомбовый",
+      "price": "7990.20",
+      "quantity": 50,
+      "image": "products_images/nike_basketball_NBA_lakers_UAyuwK5.webp",
+      "category": 2
+    }
+  }
+]
