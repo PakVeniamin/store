@@ -9,7 +9,7 @@
                             <div class="alert alert-warning alert-dismissible fade show" role="alert" style="margin-top: 50px;">
                                 {% if messages %}
                                     {% for message in messages %}
-                                        {{ messages }}
+                                        {{ message }}
                                     {% endfor %}
                                 {% else %}
                                     {{ form.non_field_errors }}

@@ -1,7 +1,8 @@
 from django.shortcuts import render, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import auth, messages
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
+from django.views.generic import FormView
 from products.models import Basket
 
 
@@ -24,17 +25,15 @@ def login(request):
     return render(request, 'users/login.html', context)
 
 
-def registration(request):
-    if request.method == 'POST':
-        form = UserRegistrationform(data=request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Ты справился с регистрацией!')
-            return HttpResponseRedirect(reverse('users:login'))
-    else:
-        form = UserRegistrationform()
-    context = {'form': form}
-    return render(request, 'users/register.html', context)
+class RegistrationView(FormView):
+    form_class = UserRegistrationform
+    template_name = 'users/register.html'
+    success_url = reverse_lazy('users:login')
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, 'Ты справился с регистрацией!')
+        return super().form_valid(form)
 
 
 @login_required
