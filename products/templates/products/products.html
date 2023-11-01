@@ -65,13 +65,17 @@
                             <h4 class="card-title">
                                 <a href="#">{{ product.name}}</a>
                             </h4>
-                            <h5>{{ product.price }} руб.</h5>
+                            <h5>{{ product.price }} руб. </h5>
                             <p class="card-text">{{ product.description }}</p>
                         </div>
                         <div class="card-footer text-center">
-                            <a class = 'btn btn-outline-success' href="{% url 'products:basket_add' product.id %}">
-                                Отправить в корзину
-                            </a>
+                            <form method="post" action="{% url 'products:basket_add' product.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class = 'btn btn-outline-success'>
+                                    Отправить в корзину
+                                </button>
+                            </form>
+
                         </div>
                     </div>
                 </div>
