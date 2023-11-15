@@ -36,7 +36,7 @@ class RegistrationView(FormView):
     success_url = reverse_lazy('users:verify')
 
     def form_valid(self, form):
-        user = form.save()
+        user = form.save(commit=False)
         verification_code = VerificationCode(user=user)
         verification_code.generate_code()
         verification_code.send_code()
