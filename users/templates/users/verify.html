@@ -8,6 +8,7 @@
     <h1>Подтвердите свою почту</h1>
     <p>Мы отправили вам код подтверждения на вашу почту. Пожалуйста, введите его в форму ниже.</p>
     <form method="POST" action="{% url 'users:verify' %}">
+        {% csrf_token %}
         <label for="code">Код подтверждения:</label>
         <input type="text" id="code" name="code" required>
         <button type="submit">Подтвердить</button>

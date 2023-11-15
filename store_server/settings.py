@@ -141,3 +141,7 @@ EMAIL_PORT = 465
 EMAIL_USE_SSL = True
 EMAIL_HOST_USER = 'test_email23@mail.ru'
 EMAIL_HOST_PASSWORD = 'RrRe8zMdSTptFVxzeNfr'
+
+#аутентификация
+AUTHENTICATION_BACKENDS = ['users.backends.EmailBackend']
+
