@@ -1,7 +1,11 @@
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, UserChangeForm
-from users.models import User
+from django.core.exceptions import ValidationError
 
+from users.models import User
+from django.contrib import auth
 from django import forms
+
+from users.utils import send_mail_for_verify
 
 
 class Userloginform(AuthenticationForm):
@@ -14,6 +18,29 @@ class Userloginform(AuthenticationForm):
     class Meta:
         model = User
         fields = ('username', 'password')
+
+    def clean(self):
+        username = self.cleaned_data.get('username')
+        password = self.cleaned_data.get('password1')
+
+        if username is not None and password:
+            self.user_cache = auth.authenticate(
+                self.request,
+                username=username,
+                password=password,
+            )
+            if not self.user_cache.email_cerify:
+                send_mail_for_verify(self.request, self.user_cache)
+                raise ValidationError(
+                    f'Email не идентифицирован, мы отправили вам ссылку по адресу {User.objects.get(username=username)}',
+                    code='invalid_login',
+                )
+            if self.user_cache is None:
+                raise self.get_invalid_login_error()
+            else:
+                self.confirm_login_allowed(self.user_cache)
+
+        return self.cleaned_data
 
 
 class UserRegistrationform(UserCreationForm):
@@ -30,13 +57,12 @@ class UserRegistrationform(UserCreationForm):
     password2 = forms.CharField(widget=forms.PasswordInput(attrs={
         'class': 'form-control py-4', 'placeholder': 'Подтвердите пароль'}))
 
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        user.set_password(self.cleaned_data['password1'])
-        user.is_active = False
-        if commit:
-            user.save()
-        return user
+    # def save(self, commit=True):
+    #     user = super().save(commit=False)
+    #     user.set_password(self.cleaned_data['password1'])
+    #     if commit:
+    #         user.save()
+    #     return user
 
     class Meta:
         model = User
@@ -53,3 +79,11 @@ class Userprofileform(UserChangeForm):
     class Meta:
         model = User
         fields = ('first_name', 'last_name', 'image', 'username', 'email')
+
+
+class VerifyForm(UserCreationForm):
+    code = forms.CharField(max_length=6)
+
+    class Meta:
+        model = User
+        fields = ('code',)

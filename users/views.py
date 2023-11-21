@@ -1,13 +1,16 @@
-
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.shortcuts import render, HttpResponseRedirect, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.tokens import default_token_generator as token_generator
 from django.contrib import auth, messages
 from django.urls import reverse, reverse_lazy
-from django.utils.decorators import method_decorator
-from django.views.generic import FormView, TemplateView, View
-from products.models import Basket
-from users.models import VerificationCode
+from django.utils.http import urlsafe_base64_decode
+from django.views.generic import TemplateView, View
+from django.contrib.auth.tokens import default_token_generator as token_generator
 
+from products.models import Basket
+from users.utils import send_mail_for_verify
 from users.forms import Userloginform, UserRegistrationform, Userprofileform
 
 
@@ -18,9 +21,9 @@ class UserLoginView(View):
             username = request.POST['username']
             password = request.POST['password']
             user = auth.authenticate(username=username, password=password)
-            if user:
+            if user and user.is_active:
                 auth.login(request, user)
-                return HttpResponseRedirect(reverse('users:verify'))
+                return HttpResponseRedirect(reverse('index'))
         context = {'form': form}
         return render(request, 'users/login.html', context)
 
@@ -30,20 +33,52 @@ class UserLoginView(View):
         return render(request, 'users/login.html', context)
 
 
-class RegistrationView(FormView):
+class RegistrationView(View):
     form_class = UserRegistrationform
     template_name = 'users/register.html'
-    success_url = reverse_lazy('users:verify')
 
-    def form_valid(self, form):
-        user = form.save(commit=False)
-        verification_code = VerificationCode(user=user)
-        verification_code.generate_code()
-        verification_code.send_code()
-        messages.success(self.request, 'Вы успешно зарегистрировались! '
-                                       'Пожалуйста, проверьте свою почту и введите код подтверждения')
-        auth.login(self.request, user)
-        return super().form_valid(form)
+    def get(self, request):
+        form = self.form_class()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password1')
+            user = auth.authenticate(username=username, password=password)
+            send_mail_for_verify(request, user)
+            return redirect('users:confirm_email')
+        context = {
+            'form': form
+        }
+        return render(request, self.template_name, context)
+
+
+User = get_user_model()
+
+
+class EmailVerify(View):
+    def get(self, request, uidb64, token):
+        user = self.get_user(uidb64)
+
+        if user is not None and token_generator.check_token(user, token):
+            user.email_verify = True
+            user.save()
+            auth.login(request, user)
+            return redirect('users:login')
+        return redirect('invalid_verify')
+
+    @staticmethod
+    def get_user(uidb64):
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError,
+                User.DoesNotExist, ValidationError):
+            user = None
+        return user
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):
@@ -70,39 +105,6 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class VerifyView(View):
-    def get(self, request):
-        user = request.user
-        if user.is_authenticated:
-            try:
-                verification_code = VerificationCode.objects.get(user=user)
-            except VerificationCode.DoesNotExist:
-                verification_code = VerificationCode(user=user)
-                verification_code.generate_code()
-                verification_code.send_code()
-            return render(request, 'users/verify.html')
-        else:
-            return redirect('users:login')
-
-    def post(self, request):
-        user = request.user
-        input_code = request.POST.get('code')
-        try:
-            verification_code = VerificationCode.objects.get(user=user)
-        except VerificationCode.DoesNotExist:
-            messages.error(request, 'У вас нет кода подтверждения, пожалуйста, запросите новый')
-            return redirect('users:verify')
-
-        if input_code == verification_code.code:
-            user.is_active = True
-            user.save()
-            verification_code.delete()
-            messages.success(request, 'Ваша учетная запись активирована'
-                                      'Теперь вы можете зайти на сайт')
-            return redirect('users:login')
-        else:
-            return render(request, 'users/verify.html', {'error': 'Неправильный код подтверждения'})
-
 def logout(request):
     auth.logout(request)
-    return HttpResponseRedirect(next_page=reverse_lazy('index'))
+    return HttpResponseRedirect(reverse_lazy('index'))
