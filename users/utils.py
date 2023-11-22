@@ -16,11 +16,11 @@ def send_mail_for_verify(request, user):
         'token': token_generator.make_token(user),
     }
     message = render_to_string(
-        'users/vetify_email.html',
+        'users/EmailVerification/vetify_email.html',
         context,
     )
     email = EmailMessage(
-        'Email Verification',
+        'EmailVerification',
         message,
         from_email=settings.EMAIL_HOST_USER,
         to=[user.email],

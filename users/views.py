@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.shortcuts import render, HttpResponseRedirect, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.tokens import default_token_generator as token_generator
 from django.contrib import auth, messages
 from django.urls import reverse, reverse_lazy
 from django.utils.http import urlsafe_base64_decode
@@ -21,7 +20,7 @@ class UserLoginView(View):
             username = request.POST['username']
             password = request.POST['password']
             user = auth.authenticate(username=username, password=password)
-            if user and user.is_active:
+            if user and user.email_verify:
                 auth.login(request, user)
                 return HttpResponseRedirect(reverse('index'))
         context = {'form': form}
