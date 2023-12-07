@@ -23,6 +23,11 @@ class UserLoginView(View):
             if user and user.email_verify:
                 auth.login(request, user)
                 return HttpResponseRedirect(reverse('index'))
+            elif not user.email_verify:
+                messages = ['Ваш email не подтвержден, мы отправили вам новую ссылку для подтверждения '
+                            'электронной почты']
+                user = auth.authenticate(username=username, password=password)
+                send_mail_for_verify(request, user)
             else:
                 messages = ['Неправильный логин или пароль']
         context = {'form': form, 'messages': messages}
