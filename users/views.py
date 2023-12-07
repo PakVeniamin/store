@@ -23,7 +23,9 @@ class UserLoginView(View):
             if user and user.email_verify:
                 auth.login(request, user)
                 return HttpResponseRedirect(reverse('index'))
-        context = {'form': form}
+            else:
+                messages = ['Неправильный логин или пароль']
+        context = {'form': form, 'messages': messages}
         return render(request, 'users/login.html', context)
 
     def get(self, request):
