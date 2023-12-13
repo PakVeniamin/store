@@ -74,7 +74,7 @@ class EmailVerify(View):
             user.save()
             auth.login(request, user)
             return redirect('users:login')
-        return redirect('invalid_verify')
+        return redirect('users:invalid_verify')
 
     @staticmethod
     def get_user(uidb64):
@@ -93,8 +93,6 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         if form.is_valid():
             form.save()
             return HttpResponseRedirect(reverse('users:profile'))
-        else:
-            print(form.errors)
 
         context = self.get_context_data(form=form)
         return render(request, 'users/profile.html', context)

@@ -20,7 +20,7 @@ def send_mail_for_verify(request, user):
         context,
     )
     email = EmailMessage(
-        'EmailVerification',
+        'Верификация почтового ящика',
         message,
         from_email=settings.EMAIL_HOST_USER,
         to=[user.email],
