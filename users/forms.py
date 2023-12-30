@@ -5,7 +5,7 @@ from users.models import User
 from django.contrib import auth
 from django import forms
 
-from users.utils import send_mail_for_verify
+from users.email import send_mail_for_verify
 
 
 class Userloginform(AuthenticationForm):

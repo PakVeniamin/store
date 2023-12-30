@@ -25,6 +25,8 @@ SECRET_KEY = 'django-insecure-=48ho)^k(j#c_5xcz4hsld(zo!7s+9^78f&tmj&ac=4kooi$dm
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+DOMAIN = 'localhost'
+
 ALLOWED_HOSTS = ['*']
 
 
@@ -128,6 +130,7 @@ LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'UTC'
 
 
+
 USE_I18N = True
 
 USE_TZ = True
@@ -159,5 +162,6 @@ EMAIL_USE_SSL = True
 EMAIL_HOST_USER = 'test_email23@mail.ru'
 EMAIL_HOST_PASSWORD = 'RrRe8zMdSTptFVxzeNfr'
 
-#аутентификация
-
+#Celery
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'

@@ -2,36 +2,38 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.shortcuts import render, HttpResponseRedirect, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib import auth, messages
+from django.contrib import auth
 from django.urls import reverse, reverse_lazy
 from django.utils.http import urlsafe_base64_decode
 from django.views.generic import TemplateView, View
 from django.contrib.auth.tokens import default_token_generator as token_generator
 
 from products.models import Basket
-from users.utils import send_mail_for_verify
+from users.email import send_mail_for_verify
 from users.forms import Userloginform, UserRegistrationform, Userprofileform
 
 
 class UserLoginView(View):
     def post(self, request):
         form = Userloginform(data=request.POST)
+        messages = []
         if form.is_valid():
             username = request.POST['username']
             password = request.POST['password']
             user = auth.authenticate(username=username, password=password)
-            if user and user.email_verify:
+
+            if user is not None and user.email_verify:
                 auth.login(request, user)
                 return HttpResponseRedirect(reverse('index'))
-            elif not user.email_verify:
-                messages = ['Ваш email не подтвержден, мы отправили вам новую ссылку для подтверждения '
-                            'электронной почты']
-                user = auth.authenticate(username=username, password=password)
-                send_mail_for_verify(request, user)
+            elif user is not None and not user.email_verify:
+                messages.append('Ваш email не подтвержден, мы отправили вам новую ссылку для подтверждения '
+                                'электронной почты')
+                send_mail_for_verify.delay(user.id)
             else:
-                messages = ['Неправильный логин или пароль']
+                messages.append('Неправильный логин или пароль')
         context = {'form': form, 'messages': messages}
         return render(request, 'users/login.html', context)
+
 
     def get(self, request):
         form = Userloginform()
@@ -54,7 +56,7 @@ class RegistrationView(View):
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password1')
             user = auth.authenticate(username=username, password=password)
-            send_mail_for_verify(request, user)
+            send_mail_for_verify.delay(user.id)
             return redirect('users:confirm_email')
         context = {
             'form': form
