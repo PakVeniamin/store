@@ -1,11 +1,14 @@
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, UserChangeForm
 from django.core.exceptions import ValidationError
+from django.conf import settings
 
-from users.models import User
 from django.contrib import auth
 from django import forms
 
+from users.models import User
 from users.email import send_mail_for_verify
+from django_recaptcha.fields import ReCaptchaField
+from django_recaptcha.widgets import ReCaptchaV2Checkbox
 
 
 class Userloginform(AuthenticationForm):
@@ -15,9 +18,14 @@ class Userloginform(AuthenticationForm):
     password = forms.CharField(widget=forms.PasswordInput(attrs={
         'class': 'form-control py-4', 'placeholder': 'Введите пароль'}))
 
+    recaptcha = ReCaptchaField(widget=ReCaptchaV2Checkbox, public_key=settings.RECAPTCHA_PUBLIC_KEY,
+                               private_key=settings.RECAPTCHA_PRIVATE_KEY, label='ReCAPTCHA')
+
     class Meta:
         model = User
         fields = ('username', 'password')
+
+
 
     def clean(self):
         username = self.cleaned_data.get('username')
@@ -42,6 +50,10 @@ class Userloginform(AuthenticationForm):
 
         return self.cleaned_data
 
+    def recaptcha_is_valid(self):
+        if not self.cleaned_data.get('recaptcha', None):
+            raise ValidationError('Подтвердите, что вы не робот.')
+
 
 class UserRegistrationform(UserCreationForm):
     first_name = forms.CharField(widget=forms.TextInput(attrs={
@@ -57,9 +69,16 @@ class UserRegistrationform(UserCreationForm):
     password2 = forms.CharField(widget=forms.PasswordInput(attrs={
         'class': 'form-control py-4', 'placeholder': 'Подтвердите пароль'}))
 
+    recaptcha = ReCaptchaField(widget=ReCaptchaV2Checkbox, public_key=settings.RECAPTCHA_PUBLIC_KEY,
+                               private_key=settings.RECAPTCHA_PRIVATE_KEY, label='ReCAPTCHA')
+
     class Meta:
         model = User
         fields = ('first_name', 'last_name', 'username', 'email', 'password1', 'password2')
+
+    def recaptcha_is_valid(self):
+        if not self.cleaned_data.get('recaptcha', None):
+            raise ValidationError('Подтвердите, что вы не робот.')
 
 
 class Userprofileform(UserChangeForm):

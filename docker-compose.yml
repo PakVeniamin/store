@@ -4,6 +4,7 @@ services:
       context: .
     ports:
       - '8000:8000'
+    container_name: store-app
     volumes:
       - ./:/store_server
     environment:
@@ -19,6 +20,11 @@ services:
 
   database:
     image: postgres:14.6-alpine
+    container_name: database
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./:/store_server
     environment:
       - POSTGRES_DB=store_server
       - POSTGRES_USER=admin
@@ -27,6 +33,7 @@ services:
   redis:
     image: redis:7.0.5-alpine
     hostname: redis
+    container_name: redis
 
   worker:
     build:
@@ -34,7 +41,7 @@ services:
     hostname: worker
     entrypoint: celery
     command: -A celery_app.app worker --loglevel=info
-
+    container_name: worker
     volumes:
       - ./:/store_server
     links:
@@ -53,6 +60,7 @@ services:
     build:
       context: .
     hostname: flower
+    container_name: flower
     entrypoint: celery
     command: -A celery_app.app flower
     volumes:
